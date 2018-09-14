@@ -1,0 +1,49 @@
+---
+- name: this playbook is first one
+  hosts: webserver
+  vars: 
+   group: tomcat
+   user: tomcat
+
+  tasks:
+   - name: to create user
+     group:
+      name: "{{ group }}"
+      state: present
+   - name: to create group
+     user:
+      name: "{{ user }}"
+      group: "{{ group }}"
+      create_home: yes
+      state: present
+      uid: 2000
+      shell: /bin/sh
+
+   - name: to create directory to create logs
+     file:
+      name: /opt/tomcat_log
+      state: directory
+      mode: 0644
+      owner: "{{ user }}"
+      group: "{{ group }}"
+
+   - name: to install tomcat from web
+     get_url: 
+      url: http://apache.mirrors.tds.net/tomcat/tomcat-8/v8.5.33/bin/apache-tomcat-8.5.33.tar.gz
+      dest: /opt/apache-tomcat-8.5.33.tar.gz
+
+   - name: it si unacrchiv
+     unarchive:
+       src: /opt/apache-tomcat-8.5.33.tar.gz
+       dest: /opt
+       creates: /opt/apache-tomcat-8.5.33
+       remote_src: yes
+
+   - name: to start the apache tomcat
+     command: nohup /opt/apache-tomcat-8.5.33/bin/startup.sh
+
+   - name: wait for some time
+     wait_for:
+      port: 8080
+
+
